@@ -3,7 +3,7 @@
 
 ## Warning
 This script is very much still in beta testing, it has only been uploaded to github in this state to motivate me to continue working on it.  
-I do not recommend using it in its current state.  
+I do not recommend using it in its current state, and due to how it works, a worst case possible scenario is it bricking your PS4.  
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
