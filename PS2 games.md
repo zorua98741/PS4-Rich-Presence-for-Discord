@@ -1,4 +1,3 @@
-GameID;Name;Region;Release Date;Genre;Developer;Publisher;Players;Aspect;Scan;ESRB;PEGI;CERO;BBFC;DEJUS;ELSPA;ESRA;OFLC;USK;Box Text;Video Mode;Compat Mode;Cheat Engine;VMC0;VMC1;GSM;Hpos;Vpos;SkipVideo;Devices;DMA;CBT;Notes
 SLES54604;!Qu? pasa Neng! El videojuego 
 SLPS25527;.hack//Fragment 
 SLUS21258;.hack//G.U. Vol.1 - Rebirth 
