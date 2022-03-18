@@ -15,3 +15,6 @@ SOFTWARE.
 ## Vision
 There will eventually be 2 versions of this script, one that utilises an external text document to translate game IDs into game names,  
 and another that will do so using orbispatches.com
+
+## Acknowledgment
+- PS2 games.md sourced from [Veritas83](https://github.com/Veritas83/PS2-OPL-CFG/blob/master/test/PS2-GAMEID-TITLE-MASTER.csv)
