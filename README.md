@@ -18,3 +18,4 @@ and another that will do so using orbispatches.com
 
 ## Acknowledgment
 - PS2 games.md sourced from [Veritas83](https://github.com/Veritas83/PS2-OPL-CFG/blob/master/test/PS2-GAMEID-TITLE-MASTER.csv)
+- PS1 games.md sourced from [CRX](https://psxdatacenter.com/information.html)
