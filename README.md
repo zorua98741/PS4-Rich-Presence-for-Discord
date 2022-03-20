@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```  
-Although no issues have been experienced while testing this script, i cannot guarantee a stable user experience.
+Although no major issues have been experienced while testing this script, i cannot guarantee a stable user experience.
 
 ## Quickstart-guide
 1. enable GoldHen on the PS4.
@@ -34,6 +34,10 @@ you can contact me via Discord: "zorua98741#0023".
 
 ## Aditional information
 in the interest of brevity, all additional information has been moved to pages on the [wiki](https://github.com/zorua98741/PS4-Rich-Presence-for-Discord/wiki).
+
+## Known issues
+putting the PS4 into rest mode or disconnecting it from the internet and then turning it back on/reconnecting it can cause the FTP server to not respond.
+To fix, disable and re-enable the FTP server.
 
 ## Acknowledgment
 - [PS2 games.md](https://github.com/zorua98741/PS4-Rich-Presence-for-Discord/blob/main/PS2%20games.md) sourced from [Veritas83](https://github.com/Veritas83/PS2-OPL-CFG/blob/master/test/PS2-GAMEID-TITLE-MASTER.csv)
