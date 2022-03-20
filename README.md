@@ -10,6 +10,7 @@ No game 	| 	PS4 game 	|	PS2 game 	|	PS1 game 	|
  ![noGame](https://i.imgur.com/MTrBFew.png) | ![PS4Game](https://i.imgur.com/gtIW76h.png) | ![PS2Game](https://i.imgur.com/riihpST.png) 	| ![PS1Game](https://i.imgur.com/CRRjGFZ.png) 	|
 
 ## Warning
+This script is still in a "early beta" phase.  
 ```
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -19,7 +20,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```  
-Although no major issues have been experienced while testing this script, i cannot guarantee a stable user experience.
+Although no major issues have been experienced while testing this script, i cannot guarantee a stable user experience.  
+The .py file has not yet been released as it is not complete.
 
 ## Quickstart-guide
 1. enable GoldHen on the PS4.
