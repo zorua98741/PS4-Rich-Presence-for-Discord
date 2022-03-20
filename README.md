@@ -1,6 +1,7 @@
 # PS4-Rich-Presence-for-Discord
  Rich presence script for jailbroken playstation 4.  
  Display what game you are playing on the PS4 via Discord.  
+ ---
  [![pypresence](https://img.shields.io/badge/using-pypresence-00bb88.svg?style=for-the-badge&logo=discord&logoWidth=20)](https://github.com/qwertyquerty/pypresence)
 
 ## Display Example
@@ -18,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```  
-Although no issues have been experienced while testing this script, i can not guarantee the same user experience.
+Although no issues have been experienced while testing this script, i cannot guarantee a good user experience.
 
 ## Quickstart-guide
 1. run the script on your computer
