@@ -26,7 +26,7 @@ The .py file has not yet been released as it is not complete.
 ## Quickstart-guide
 1. enable GoldHen on the PS4.
 2. enable the FTP server on the PS4.
-3. run the script on your computer.
+3. run the script on your computer (with Discord open).
 4. enter the PS4's IP address when prompted and press *enter*.
 5. a config file will be generated in the same directory as the script that will allow you to change some options.
 6. your Discord presence should be updated automatically.
@@ -37,9 +37,10 @@ you can contact me via Discord: "zorua98741#0023".
 ## Aditional information
 in the interest of brevity, all additional information has been moved to pages on the [wiki](https://github.com/zorua98741/PS4-Rich-Presence-for-Discord/wiki).
 
-## Known issues
-putting the PS4 into rest mode or disconnecting it from the internet and then turning it back on/reconnecting it can cause the FTP server to not respond.
-To fix, disable and re-enable the FTP server.
+## Known issues/Limitations
+- putting the PS4 into rest mode or disconnecting it from the internet and then turning it back on/reconnecting it can cause the FTP server to not respond.
+To fix, disable and re-enable the FTP server. (PS4 limitation).
+- no mobile support or way to run without a PC (Discord limitation).
 
 ## Acknowledgment
 - [ORBISPatches](https://orbispatches.com/) for their amazing work in archiving PlayStation 4 games, which is used by this script to resolve a game ID to a name and image
