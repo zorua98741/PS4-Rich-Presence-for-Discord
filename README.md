@@ -7,7 +7,8 @@
 ## Display Example
 No game 	| 	PS4 game 	|	PS2 game* 	|	PS1 game* 	|
  -----------|---------------|---------------|---------------|
- ![noGame](https://i.imgur.com/MTrBFew.png) | ![PS4Game](https://i.imgur.com/gtIW76h.png) | ![PS2Game](https://i.imgur.com/riihpST.png) 	| ![PS1Game](https://i.imgur.com/CRRjGFZ.png) 	|
+ ![noGame](https://i.imgur.com/MTrBFew.png) | ![PS4Game](https://i.imgur.com/gtIW76h.png) | ![PS2Game](https://i.imgur.com/riihpST.png) 	| ![PS1Game](https://i.imgur.com/CRRjGFZ.png) 	|  
+ 
 &ast; PS2 and PS1 will only have custom game covers if you upload the images to a [Discord developer application](https://github.com/zorua98741/PS4-Rich-Presence-for-Discord/wiki#custom-game-images-expanded-tutorial-coming-soon)
 
 ## Warning
