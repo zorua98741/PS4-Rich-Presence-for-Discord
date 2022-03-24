@@ -24,12 +24,13 @@ Although no major issues have been experienced while testing this script, i cann
 The .py file has not yet been released as it is not complete.
 
 ## Quickstart-guide
-1. enable GoldHen on the PS4.
-2. enable the FTP server on the PS4.
-3. run the script on your computer (with Discord open).
-4. enter the PS4's IP address when prompted and press *enter*.
-5. a config file will be generated in the same directory as the script that will allow you to change some options.
-6. your Discord presence should be updated automatically.
+1. download "PS4RPD.exe" ~~or "PS4RPD.py"~~
+2. enable GoldHen on the PS4.
+3. enable the FTP server on the PS4.
+4. run the script on your computer (with Discord open).
+5. enter the PS4's IP address when prompted and press *enter*.
+6. a config file will be generated in the same directory as the script that will allow you to change some options. (values will only update on restart of script)
+7. your Discord presence should be updated automatically.
 
 ## Contact Me
 you can contact me via Discord: "zorua98741#0023".
