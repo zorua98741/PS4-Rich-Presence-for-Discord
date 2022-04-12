@@ -23,10 +23,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```  
 Although no major issues have been experienced while testing this script, i cannot guarantee a stable user experience.  
-The .py file has not yet been released as it is not complete.
 
 ## Quickstart-guide
-1. download "PS4RPD.exe" ~~or "PS4RPD.py"~~
+1. download "PS4RPD.exe" or "PS4RPD.py"
 2. enable GoldHen on the PS4.
 3. enable the FTP server on the PS4.
 4. run the script on your computer (with Discord open).
