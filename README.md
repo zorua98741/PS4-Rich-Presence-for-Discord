@@ -12,7 +12,6 @@ No game 	| 	PS4 game 	|	PS2 game* 	|	PS1 game* 	|
 &ast; PS2 and PS1 will only have custom game covers if you upload the images to a [Discord developer application](https://github.com/zorua98741/PS4-Rich-Presence-for-Discord/wiki#custom-game-images-expanded-tutorial-coming-soon)
 
 ## Warning
-This script is still in a "early beta" phase.  
 ```
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
