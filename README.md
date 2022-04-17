@@ -45,7 +45,7 @@ To fix, disable and re-enable the FTP server. (PS4 limitation).
 - no mobile support or way to run without a PC (Discord limitation).
 
 ## Acknowledgment
-- [ORBISPatches](https://orbispatches.com/) for their amazing work in archiving PlayStation 4 games, which is used by this script to resolve a game ID to a name and image
+- [ORBISPatches](https://orbispatches.com/) for their amazing work in creating a place for finding PlayStation 4 games
 - [PS2 games.md](https://github.com/zorua98741/PS4-Rich-Presence-for-Discord/blob/main/PS2%20games.md) sourced from [Veritas83](https://github.com/Veritas83/PS2-OPL-CFG/blob/master/test/PS2-GAMEID-TITLE-MASTER.csv)
 - [PS1 games.md](https://github.com/zorua98741/PS4-Rich-Presence-for-Discord/blob/main/PS1%20games.md) sourced from [CRX](https://psxdatacenter.com/information.html)  
 
