@@ -1,5 +1,5 @@
 from ftplib import FTP                                  # used to establish connection between PC and PS4
-import os                                               # used to test if external config file exists
+from os import path                                     # used to test if external config file exists
 from pypresence import Presence                         # used for sending data to Discord developer application
 from pypresence import InvalidPipe                      # used for handling discord not found on system errors
 from pypresence import InvalidID
@@ -43,11 +43,11 @@ class ExternalFile(object):                             # perform all external f
             prepWork.getIP()                            # call PrepWork classes getIP() function
 
     def normaliseData(self):
-        self.section = []
+        self.section = []   # ! reset because getNewData() will call this, needs to be revisited
         for i in range(len(self.data)):
             self.data[i] = self.data[i].rstrip("\n")  # remove "\n" if present on every line
             try:
-                self.data[i] = self.data[i].split(": ")  # split into [0]: [1]
+                self.data[i] = self.data[i].split(": ", 1)  # split into [0]: [1] (specify to split only once)
                 self.data[i] = self.data[i][1]  # makes data[i] the value, instead of "info: value"
             except IndexError:
                 self.data[i] = self.data[i][0]  # makes external config file more forgiving of format
@@ -79,8 +79,8 @@ class ExternalFile(object):                             # perform all external f
         # print("variables: ", self.s1configVariables)      # DEBUGGING
 
     def devApps(self):                                      # separate titleID-appID from config file
-        self.s2appIDVariables = []
-        self.s2titleIDVariables = []
+        self.s2appIDVariables = []  # ! reset because getNewData() will call this, needs to be revisited
+        self.s2titleIDVariables = []    # ! reset because getNewData() will call this, needs to be revisited
         for i in range(self.section[1], self.section[2]-1):
             if i % 2 == 1:
                 self.s2appIDVariables.append(self.data[i+1])
@@ -89,9 +89,9 @@ class ExternalFile(object):                             # perform all external f
         # print("devApps: ", self.s2appIDVariables, self.s2titleIDVariables)        # DEBUGGING
 
     def previouslyMapped(self):                             # separate previously mapped titleIDs from config file
-        self.s3titleIDVariables = []
-        self.s3gameNameVariables = []
-        self.s3imageVariables = []
+        self.s3titleIDVariables = []    # ! reset because getNewData() will call this, needs to be revisited
+        self.s3gameNameVariables = []   # ! reset because getNewData() will call this, needs to be revisited
+        self.s3imageVariables = []      # ! reset because getNewData() will call this, needs to be revisited
         for i in range(self.section[2]+1, len(self.data)):
             line = i                                        # relevant line in data
             i = i - self.section[2]-1                       # since self.section[2] is variable, range will change and make modulus operations wrong, fix by bringing "i" back to 0
@@ -163,7 +163,7 @@ class PrepWork(object):
             self.ftp.cwd("/mnt/sandbox")                # change directory to one known to exist on PS4, but unlikely on other servers
             self.ftp.quit()                             # if the code reaches here then the IP given definitely belongs to a PS4, close connection
 
-            if os.path.isfile('./PS4RPDconfig.txt') is False:  # if the file does NOT exist, then it must be made with newly acquired PS4 IP address
+            if path.isfile('./PS4RPDconfig.txt') is False:  # if the file does NOT exist, then it must be made with newly acquired PS4 IP address
                 externalFile.saveData()
             else:                                               # if it does exist, then only update the "IP" variable
                 externalFile.updateIP()
@@ -211,6 +211,7 @@ class GatherDetails(object):
         self.found = False
 
     def getTitleID(self):
+        self.titleID = None             # ! bandaid fix ! fixes crash of going from game to main menu
         data = []                                                       # variable to hold folders in PS4 folder
         gameTypeFound = False
         try:
@@ -221,7 +222,7 @@ class GatherDetails(object):
             self.ftp.quit()                                             # close FTP connection
 
             for i in range(len(data)):
-                if 'NPXS' not in data[i]:                               # find an item not containing "NPXS"
+                if search('(?!NPXS)([a-zA-Z0-9]{4}[0-9]{5})', data[i]) is not None:   # annoying that regex has to be done twice
                     self.titleID = search('(?!NPXS)([a-zA-Z0-9]{4}[0-9]{5})', data[i])
 
             if self.titleID is not None:
@@ -338,6 +339,8 @@ class GatherDetails(object):
             prepWork.RPC.connect()
 
 
+allowed = ["True", "true"]
+
 externalFile = ExternalFile()
 prepWork = PrepWork()
 gatherDetails = GatherDetails()
@@ -356,7 +359,7 @@ while True:
         gatherDetails.checkMappedGames()
         externalFile.getNewData()
         gatherDetails.changeDevApp()
-        if externalFile.s1configVariables[3] == "True" or externalFile.s1configVariables[3] == "true":
+        if externalFile.s1configVariables[3] in allowed:
             timer = time()
     else:
         print("prevGetGameInfo():       ", gatherDetails.gameName, " : ", gatherDetails.gameImage)
