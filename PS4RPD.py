@@ -1,4 +1,5 @@
 from ftplib import FTP                                  # used to establish connection between PC and PS4
+from ftplib import error_temp                           # used for error 421 too many connections (when user connects to FTP server)
 from os import path                                     # used to test if external config file exists
 from pypresence import Presence                         # used for sending data to Discord developer application
 from pypresence import InvalidPipe                      # used for handling discord not found on system errors
@@ -187,9 +188,9 @@ class PrepWork(object):
             self.ftp.connect(externalFile.s1configVariables[0], 2121)   # connect to PS4's FTP server, port must be 2121
             self.ftp.login("", "")                                      # no default username or password
             self.ftp.quit()                                             # close FTP session
-        except (ConnectionRefusedError, TimeoutError):                  # ConnectionRefused when PS4 on, but FTP server off, Timeout when PS4 off
-            print("findPS4():           !PS4 not found! Waiting 15 seconds and retrying")
-            sleep(15)                                                   # sleep program for 15 seconds
+        except (ConnectionRefusedError, TimeoutError, error_temp):                  # ConnectionRefused when PS4 on, but FTP server off, Timeout when PS4 off
+            print("findPS4():           !PS4 not found! Waiting 60 seconds and retrying")
+            sleep(60)                                                   # sleep program for 15 seconds
             self.findPS4()                                              # call findPS4() until it is found with FTP server enabled
 
 
@@ -239,7 +240,7 @@ class GatherDetails(object):
                 self.gameType = "Homebrew"
 
             print("getTitleID():        ", self.titleID)
-        except (ConnectionRefusedError, TimeoutError):                  # ConnectionRefused for PS4 on FTP server off, Timeout for PS4 off
+        except (ConnectionRefusedError, TimeoutError, error_temp):                  # ConnectionRefused for PS4 on FTP server off, Timeout for PS4 off
             prepWork.findPS4()                                          # call PrepWork's findPS4() function
 
     def checkMappedGames(self):
@@ -260,7 +261,7 @@ class GatherDetails(object):
         else:
             print("checkMappedGames():          ", self.titleID, " : ", self.gameName, " : ", self.gameImage)
 
-    def getGameInfo(self):
+    def getGameInfo(self):              # ! SHOULD BE REWRITTEN INTO MULTIPLE FUNCTION !
         if self.titleID is not None:
             if self.gameType == "PS4":
                 modifiedTitleID = self.titleID + "_00"                                  # tmdb titleID's add "_00" to the end for whatever reason
@@ -357,7 +358,7 @@ while True:
     if gatherDetails.titleID != previousTitleID:    # used so webpage does not need to be contacted if the details will be the same
         previousTitleID = gatherDetails.titleID     # update previously opened game
         gatherDetails.checkMappedGames()
-        externalFile.getNewData()
+        externalFile.getNewData()   # method to get new data should be revisited
         gatherDetails.changeDevApp()
         if externalFile.s1configVariables[3] in allowed:
             timer = time()
