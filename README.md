@@ -45,7 +45,7 @@ in the interest of brevity, all additional information has been moved to pages o
 - putting the PS4 into rest mode or disconnecting it from the internet and then turning it back on/reconnecting it can cause the FTP server to not respond.
 To fix, disable and re-enable the FTP server. (PS4 limitation).
 - no mobile support or way to run without a PC (Discord limitation).
-- if the user changes the NP Title of a game, then the presence will use whatever the user changed it to, making the presence display the wrong game (PS4(?) limitation) (needs further research)
+- if the user changes the NP Title of a game (or it is incorrect by default), then the presence will use whatever the user changed it to, making the presence display the wrong game (PS4(?) limitation) (needs further research)
 
 ## Acknowledgment
 - [ORBISPatches](https://orbispatches.com/) and 0x199 for pointing me in the direction of using the tmdb api
