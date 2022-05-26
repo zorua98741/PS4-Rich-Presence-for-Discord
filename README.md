@@ -23,7 +23,8 @@ SOFTWARE.
 ```  
 Although no major issues have been experienced while testing this script, i cannot guarantee a stable user experience.  
 If using the compiled .exe, your anti-virus is likely to flag the file, while i promise no malicious code has been added to my release, 
-it is the users responsibility to ensure they are not running an "unofficial" release/trojan. I also will guide you through using the .py file if need be.
+it is the users responsibility to ensure they are not running an "unofficial" release/trojan. I also will guide you through using the .py file if need be.  
+Steps to compile an exe from the py file can be found [here](https://github.com/zorua98741/PS4-Rich-Presence-for-Discord/wiki#compiling-the-exe)
 
 ## Quickstart-guide
 1. download "PS4RPD.exe" or "PS4RPD.py"
