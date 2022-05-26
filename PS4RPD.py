@@ -127,6 +127,7 @@ class ExternalFile(object):                             # perform all external f
         file = open("PS4RPDconfig.txt", "w")                # open file in "write" mode
         file.writelines(lines)                              # write all lines back into external file
         file.close()                                        # close the file
+        self.s1configVariables[0] = prepWork.ip             # fixes old IP still being used after update
 
     def addMappedGame(self):                                # adds titleID, game name, and image to end of external file
         file = open("PS4RPDconfig.txt", "a")                # open file in "append" mode
@@ -188,9 +189,10 @@ class PrepWork(object):
             self.ftp.connect(externalFile.s1configVariables[0], 2121)   # connect to PS4's FTP server, port must be 2121
             self.ftp.login("", "")                                      # no default username or password
             self.ftp.quit()                                             # close FTP session
+            self.RPC.connect()
         except (ConnectionRefusedError, TimeoutError, error_temp):                  # ConnectionRefused when PS4 on, but FTP server off, Timeout when PS4 off
             print("findPS4():           !PS4 not found! Waiting 60 seconds and retrying")
-            sleep(60)                                                   # sleep program for 15 seconds
+            sleep(60)                                                   # sleep program for 60 seconds
             self.findPS4()                                              # call findPS4() until it is found with FTP server enabled
 
 
@@ -241,6 +243,7 @@ class GatherDetails(object):
 
             print("getTitleID():        ", self.titleID)
         except (ConnectionRefusedError, TimeoutError, error_temp):                  # ConnectionRefused for PS4 on FTP server off, Timeout for PS4 off
+            prepWork.RPC.clear()
             prepWork.findPS4()                                          # call PrepWork's findPS4() function
 
     def checkMappedGames(self):
