@@ -176,24 +176,26 @@ class PrepWork(object):
 
     def findDiscord(self):
         self.RPC = Presence(externalFile.s1configVariables[1])  # create pypresence class
-        try:
-            self.RPC.connect()                                  # attempts to connect to open discord client on computer
-            print("findDiscord():           found")
-        except InvalidPipe:
-            print("findDiscord():           !not found!")
-            sleep(15)                                           # sleep program for 15 seconds
-            self.findDiscord()                                  # call findDiscord() until it is found open
+        while True:
+            try:
+                self.RPC.connect()                                  # attempts to connect to open discord client on computer
+                print("findDiscord():           found")
+                break
+            except InvalidPipe:
+                print("findDiscord():           !not found!")
+                sleep(15)                                           # sleep program for 15 seconds
 
     def findPS4(self):
-        try:
-            self.ftp.connect(externalFile.s1configVariables[0], 2121)   # connect to PS4's FTP server, port must be 2121
-            self.ftp.login("", "")                                      # no default username or password
-            self.ftp.quit()                                             # close FTP session
-            self.RPC.connect()
-        except (ConnectionRefusedError, TimeoutError, error_temp):                  # ConnectionRefused when PS4 on, but FTP server off, Timeout when PS4 off
-            print("findPS4():           !PS4 not found! Waiting 60 seconds and retrying")
-            sleep(60)                                                   # sleep program for 60 seconds
-            self.findPS4()                                              # call findPS4() until it is found with FTP server enabled
+        while True:
+            try:
+                self.ftp.connect(externalFile.s1configVariables[0], 2121)   # connect to PS4's FTP server, port must be 2121
+                self.ftp.login("", "")                                      # no default username or password
+                self.ftp.quit()                                             # close FTP session
+                self.RPC.connect()
+                break
+            except (ConnectionRefusedError, TimeoutError, error_temp):                  # ConnectionRefused when PS4 on, but FTP server off, Timeout when PS4 off
+                print("findPS4():           !PS4 not found! Waiting 60 seconds and retrying")
+                sleep(60)                                                   # sleep program for 60 seconds
 
 
 class GatherDetails(object):
