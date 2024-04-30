@@ -1,377 +1,314 @@
-from ftplib import FTP                                  # used to establish connection between PC and PS4
-from ftplib import error_temp                           # used for error 421 too many connections (when user connects to FTP server)
-from os import path                                     # used to test if external config file exists
-from pypresence import Presence                         # used for sending data to Discord developer application
-from pypresence import InvalidPipe                      # used for handling discord not found on system errors
-from pypresence import InvalidID
-from time import sleep                                  # used for delaying certain functions
-from re import search                                   # used for regular expressions (finding substrings in data)
-from time import time                                   # used for time elapsed functionality
-from hashlib import sha1                                # used for getting tmdb hash
-import hmac                                             # used for getting tmdb hash
-from requests import get                                # used for taking tmdb url and getting gameName and image
-from bs4 import BeautifulSoup                           # used for fixing formatting of tmdb output
+from pathlib import Path  # getting location of config file
+import json  # get and set values for external config file
+from socket import socket, AF_INET, SOCK_DGRAM  # get host's IP address
+import re  # various string manipulation via regex
+import networkscan  # get list of devices on user's network
+from ftplib import FTP  # connection between PC and device
+from pypresence import Presence  # sends presence data to Discord client
+from pypresence.exceptions import DiscordNotFound  # handles when Discord cannot be found as process
+from pypresence.exceptions import PipeClosed   # handles when Discord was previously connected to but is no longer found
+from time import sleep, time  # adds delay to program. Plus "time elapsed" functionality for presence
+import hmac     # generate link for tmdb
+from hashlib import sha1    # generate link for tmdb
+import requests     # get data from website
+
+default_config = {
+    "var": {
+        "ip": "",  # IPv4 address belonging to device
+        "client_id": 858345055966461973,  # Discord developer application ID
+        "wait_time": 60,  # how long to wait before grabbing new data
+        "retro_covers": True,  # will try to show separate covers if set to True
+        "hibernate": False,  # whether IP prompt is shown when fail to connect to ps4, or to wait (previously "ip_prompt")
+        "hibernate_time": 600,  # how long to wait before attempting to reconnect
+        "presence_on_home": True,  # will disconnect from Discord if set to False
+        "use_devapps": False    # whether script will try and change dev app based on titleID
+    },
+    "devapps": [
+        {"devid": "", "titleid": ""}
+    ],
+    "mapped": [
+
+    ]
+}
+title_id_dict = {
+    "PS4": "CUSA",
+    "PS1/2": ["SLES", "SCES", "SCED", "SLUS", "SCUS", "SLPS", "SCAJ", "SLKA", "SLPM", "SCPS", "CF00", "SCKA", "ALCH",
+              "CPCS", "SLAJ", "KOEI", "ARZE", "TCPS", "SCCS", "PAPX", "SRPM", "GUST", "WLFD", "ULKS", "VUGJ", "HAKU",
+              "ROSE", "CZP2", "ARP2", "PKP2", "SLPN", "NMP2", "MTP2", "SCPM", "PBPX"],
+}
+tmdb_key = bytearray.fromhex('F5DE66D2680E255B2DF79E74F890EBF349262F618BCAE2A9ACCDEE5156CE8DF2CDF2D48C71173CDC2594465B87405D197CF1AED3B7E9671EEB56CA6753C2E6B0')
+config_path = Path("ps4rpdConfig.txt")
 
 
-class ExternalFile(object):                             # perform all external file operations (get, normalise, separate)
+class PrepWork:
     def __init__(self):
-        self.data = []                                  # holds all external config values
-        self.section = []                               # holds where different sections in external file are
-
-        self.s1configVariables = []                     # holds config variables (section 1)
-
-        self.s2appIDVariables = []                      # holds Discord dev app ID variables (section 2)
-        self.s2titleIDVariables = []                    # holds titleID variables (section 2)
-
-        self.s3titleIDVariables = []                    # holds titleID variables (section 3)
-        self.s3gameNameVariables = []                   # holds game names (section 3)
-        self.s3imageVariables = []                      # holds game images (section 3)
-
-    def getData(self):                                  # load external text file and get values for persistent variables
-        try:
-            file = open("PS4RPDconfig.txt", "r")        # open file read-only
-            lines = file.readlines()                    # create list, each item is 1 line from external file
-            file.close()
-            for i in range(len(lines)):                 # loop for number of items in variable
-                self.data.append(lines[i])              # make each line a new item in list
-            del lines                                   # no longer needed
-            self.normaliseData()                        # remove unneeded formatting from data
-
-            prepWork.ip = self.s1configVariables[0]     # set ip here since s1configVariables could be not used in isPS4()
-            prepWork.isPS4()                            # file has been successfully read, check if IP address belongs to PS4
-        except FileNotFoundError:                       # external config file does not exist, most likely first run of program
-            print("config file not found\n")
-            prepWork.getIP()                            # call PrepWork classes getIP() function
-
-    def normaliseData(self):
-        self.section = []   # ! reset because getNewData() will call this, needs to be revisited
-        for i in range(len(self.data)):
-            self.data[i] = self.data[i].rstrip("\n")  # remove "\n" if present on every line
-            try:
-                self.data[i] = self.data[i].split(": ", 1)  # split into [0]: [1] (specify to split only once)
-                self.data[i] = self.data[i][1]  # makes data[i] the value, instead of "info: value"
-            except IndexError:
-                self.data[i] = self.data[i][0]  # makes external config file more forgiving of format
-
-        while True:             # has to be after removing "\n" for some reason, runs until "break is reached"
-            try:
-                self.data.remove('')  # removes empty lines
-            except ValueError:
-                break
-
-        # for i in range(len(self.data)):       # DEBUGGING
-            # print(self.data[i])
-        # print("\n")                           # DEBUGGING
-
-        for i in range(len(self.data)):         # create list holding where different sections of data begin
-            if '=' in self.data[i]:
-                self.section.append(i)
-
-        self.variables()
-        self.devApps()
-        self.previouslyMapped()
-
-    def variables(self):                                    # separate persistent variables from config file
-        self.s1configVariables = []                                         # ! reset because getNewData() will call this, needs to be revisited
-        for i in range(self.section[0], self.section[1]-1):     # uses section identifiers for flexibility
-            self.s1configVariables.append(self.data[i+1])       # add value to list
-        if int(self.s1configVariables[2]) < 15:                 # minimum value of 15 seconds for refresh time
-            self.s1configVariables[2] = 15
-        # print("variables: ", self.s1configVariables)      # DEBUGGING
-
-    def devApps(self):                                      # separate titleID-appID from config file
-        self.s2appIDVariables = []  # ! reset because getNewData() will call this, needs to be revisited
-        self.s2titleIDVariables = []    # ! reset because getNewData() will call this, needs to be revisited
-        for i in range(self.section[1], self.section[2]-1):
-            if i % 2 == 1:
-                self.s2appIDVariables.append(self.data[i+1])
-            else:
-                self.s2titleIDVariables.append(self.data[i+1])
-        # print("devApps: ", self.s2appIDVariables, self.s2titleIDVariables)        # DEBUGGING
-
-    def previouslyMapped(self):                             # separate previously mapped titleIDs from config file
-        self.s3titleIDVariables = []    # ! reset because getNewData() will call this, needs to be revisited
-        self.s3gameNameVariables = []   # ! reset because getNewData() will call this, needs to be revisited
-        self.s3imageVariables = []      # ! reset because getNewData() will call this, needs to be revisited
-        for i in range(self.section[2]+1, len(self.data)):
-            line = i                                        # relevant line in data
-            i = i - self.section[2]-1                       # since self.section[2] is variable, range will change and make modulus operations wrong, fix by bringing "i" back to 0
-            if i % 3 == 0:
-                self.s3titleIDVariables.append(self.data[line])
-            if i % 3 == 1:
-                self.s3gameNameVariables.append(self.data[line])
-            if i % 3 == 2:
-                self.s3imageVariables.append(self.data[line])
-            # self.previouslyMappedVariables.append(self.data[i])
-        # print("previouslyMapped: ", self.s3titleIDVariables, self.s3gameNameVariables, self.s3imageVariables)     # DEBUGGING
-
-    def saveData(self):                                     # creates and adds default data to external file
-        file = open("PS4RPDconfig.txt", "w+")
-        file.write("==========Persistent Variables==========")
-        file.write("\nIP: " + str(prepWork.ip))
-        file.write("\nID: " + "858345055966461973")
-        file.write("\nRefresh time(seconds): " + "120")
-        file.write("\nReset time elapsed on game change: " + "True")
-        file.write("\n")
-        file.write("\n==========Developer Application-to-title IDs==========")
-        file.write("\n")
-        file.write("\n==========Previously Resolved Games==========")
-        file.write("\n")
-        file.close()
-        self.getNewData()
-
-    def updateIP(self):
-        file = open("PS4RPDconfig.txt", "r")                # open file in "read-only" mode
-        lines = file.readlines()                            # read in all lines from external file
-        lines[1] = "IP: " + str(prepWork.ip) + "\n"         # update the "IP" variable with newly acquired
-        file = open("PS4RPDconfig.txt", "w")                # open file in "write" mode
-        file.writelines(lines)                              # write all lines back into external file
-        file.close()                                        # close the file
-        self.s1configVariables[0] = prepWork.ip             # fixes old IP still being used after update
-
-    def addMappedGame(self):                                # adds titleID, game name, and image to end of external file
-        file = open("PS4RPDconfig.txt", "a")                # open file in "append" mode
-        file.write("\ntitleID: " + gatherDetails.titleID)
-        file.write("\ngameName: " + gatherDetails.gameName)
-        file.write("\nimage: " + gatherDetails.gameImage)
-        file.write("\n")
-        file.close()
-
-    def getNewData(self):                                   # updates data[] and also the three section lists
-        self.data = []      # reset list
-        file = open("PS4RPDconfig.txt", "r")        # open file read-only
-        lines = file.readlines()                    # create list, each item is 1 line from external file
-        file.close()
-        for i in range(len(lines)):                 # loop for number of items in variable
-            self.data.append(lines[i])              # make each line a new item in list
-        del lines                                   # no longer needed
-        self.normaliseData()                        # remove unneeded formatting from data
-
-
-class PrepWork(object):
-    def __init__(self):
-        self.ip = None
-        self.ftp = FTP()
+        self.config = default_config  # default config will be used if config file is not found
         self.RPC = None
 
-    def getIP(self):
-        self.ip = input("Please enter the PS4's IP address: ")
-        self.isPS4()
-
-    def isPS4(self):
-        try:
-            self.ftp.connect(self.ip, 2121)             # connect to FTP server on given IP address
-            self.ftp.login("", "")                      # login to FTP server
-            self.ftp.cwd("/mnt/sandbox")                # change directory to one known to exist on PS4, but unlikely on other servers
-            self.ftp.quit()                             # if the code reaches here then the IP given definitely belongs to a PS4, close connection
-
-            if path.isfile('./PS4RPDconfig.txt') is False:  # if the file does NOT exist, then it must be made with newly acquired PS4 IP address
-                externalFile.saveData()
-            else:                                               # if it does exist, then only update the "IP" variable
-                externalFile.updateIP()
-
-        except Exception as e:
-            print("No FTP server found on ", self.ip, "error: ", e)
-            self.getIP()                                    # no FTP server on input IP address, ask user for another IP
-
-    def findDiscord(self):
-        self.RPC = Presence(externalFile.s1configVariables[1])  # create pypresence class
-        while True:
-            try:
-                self.RPC.connect()                                  # attempts to connect to open discord client on computer
-                print("findDiscord():           found")
-                break
-            except InvalidPipe:
-                print("findDiscord():           !not found!")
-                sleep(15)                                           # sleep program for 15 seconds
-
-    def findPS4(self):
-        while True:
-            try:
-                self.ftp.connect(externalFile.s1configVariables[0], 2121)   # connect to PS4's FTP server, port must be 2121
-                self.ftp.login("", "")                                      # no default username or password
-                self.ftp.quit()                                             # close FTP session
-                self.RPC.connect()
-                break
-            except (ConnectionRefusedError, TimeoutError, error_temp):                  # ConnectionRefused when PS4 on, but FTP server off, Timeout when PS4 off
-                print("findPS4():           !PS4 not found! Waiting 60 seconds and retrying")
-                sleep(60)                                                   # sleep program for 60 seconds
-
-
-class GatherDetails(object):
-    def __init__(self):
-        self.ftp = FTP()
-        self.titleID = None
-        self.gameType = None
-        self.PS1PS2gameIDs = ["SLPS", "SCAJ", "SLKA", "SLPM", "SCPS", "CF00", "SCKA", "ALCH", "CPCS", "SLAJ", "KOEI",
-                              "ARZE", "TCPS", "SCCS", "PAPX", "SRPM", "GUST", "WLFD", "ULKS", "VUGJ", "HAKU", "ROSE",
-                              "CZP2", "ARP2", "PKP2", "SLPN", "NMP2", "MTP2", "SCPM",
-                              "SLUS", "SCUS", "PBPX",
-                              "SLES", "SCES", "SCED"]           # incomplete list of gameIDs for PS1 and PS2 games
-        self.tmdbKey = bytearray.fromhex('F5DE66D2680E255B2DF79E74F890EBF349262F618BCAE2A9ACCDEE5156CE8DF2CDF2D48C71173CDC2594465B87405D197CF1AED3B7E9671EEB56CA6753C2E6B0')
-        self.gameName = None
-        self.gameImage = None
-
-        self.appChanged = False
-        self.found = False
-
-    def getTitleID(self):
-        self.titleID = None             # ! bandaid fix ! fixes crash of going from game to main menu
-        data = []                                                       # variable to hold folders in PS4 folder
-        gameTypeFound = False
-        try:
-            self.ftp.connect(externalFile.s1configVariables[0], 2121)   # connect to PS4's FTP server, post must be 2121
-            self.ftp.login()                                            # no default username or password
-            self.ftp.cwd("/mnt/sandbox")                                # change active directory
-            self.ftp.dir(data.append)                                   # get directory listing and add each item to to list with formatting similar to "ls -l"
-            self.ftp.quit()                                             # close FTP connection
-
-            for i in range(len(data)):
-                if search('(?!NPXS)([a-zA-Z0-9]{4}[0-9]{5})', data[i]) is not None:   # annoying that regex has to be done twice
-                    self.titleID = search('(?!NPXS)([a-zA-Z0-9]{4}[0-9]{5})', data[i])
-
-            if self.titleID is not None:
-                self.titleID = self.titleID.group(0)                    # remove <re.Match object> etc> junk
-                if "CUSA" in self.titleID:                              # must be a PS4 game to be true
-                    self.gameType = "PS4"
-                    gameTypeFound = True
+    def read_config(self):
+        if config_path.is_file():  # file exists
+            with config_path.open(mode="r") as f:
+                try:
+                    self.config = json.load(f)  # load config from external file
+                except json.decoder.JSONDecodeError as e:
+                    print(f"read_config():   error with JSON (config file): {e}")
+                f.close()
+            if self.test_for_ps4(self.config["var"]["ip"]) is False:
+                # check that IP still belongs to PS4 and that it is online.
+                if self.config["var"]["hibernate"] is False:
+                    self.prompt_user()
                 else:
-                    for i in range(len(self.PS1PS2gameIDs)):
-                        if self.PS1PS2gameIDs[i] in self.titleID:       # must be a PS1/PS2 game
-                            self.gameType = "PS1/PS2"
-                            gameTypeFound = True
-            if gameTypeFound is False:
-                self.gameType = "Homebrew"
+                    while self.test_for_ps4(self.config["var"]["ip"]) is False:
+                        print(f"read_config():   ps4 not found, hibernating {self.config['var']['hibernate_time']} seconds")
+                        sleep(self.config["var"]["hibernate_time"])
+        else:  # file does not exist
+            self.prompt_user()  # ask user how to get the devices IP address
 
-            print("getTitleID():        ", self.titleID)
-        except (ConnectionRefusedError, TimeoutError, error_temp):                  # ConnectionRefused for PS4 on FTP server off, Timeout for PS4 off
-            prepWork.RPC.clear()
-            prepWork.findPS4()                                          # call PrepWork's findPS4() function
+    def prompt_user(self):
+        print("Get PS4's IP address Automatically or Manually?")
+        choice = "placeholder"
+        accepted = ["a", "m"]
+        while choice[0].lower() not in accepted:  # loop until first character of user input is either "a" or "m"
+            choice = input("Please enter either 'a' or 'm': ")
+        if choice[0].lower() == "a":  # use networkscan to try and find device automatically
+            self.scan_network()
+        elif choice[0].lower() == "m":  # allow user to manually enter device IP address
+            self.get_ip_from_user()
+        else:  # this should never be reached
+            exit("Unexpected input")
 
-    def checkMappedGames(self):
-        found = False
-        if not externalFile.s3titleIDVariables:
-            print("checkMappedGames():         !list is empty!")
-            self.getGameInfo()
-            found = True            # not actually found, but stops from running getGameInfo() twice
-        if self.titleID is not None:
-            for i in range(len(externalFile.s3titleIDVariables)):
-                if self.titleID == externalFile.s3titleIDVariables[i]:      # check if titleID is in external file
-                    found = True
-                    self.gameName = externalFile.s3gameNameVariables[i]
-                    self.gameImage = externalFile.s3imageVariables[i]
-        if found is not True:
-            print("checkMappedGames():         !game is not mapped!")
-            self.getGameInfo()
+    def scan_network(self):
+        try:
+            temp_sock = socket(AF_INET, SOCK_DGRAM)
+            temp_sock.connect(("8.8.8.8", 80))
+            host_ip = temp_sock.getsockname()[0]  # host IP address
+            temp_sock.close()
+        except Exception as e:
+            print(f"Error while getting host network. '{e}'")
+            self.get_ip_from_user()
         else:
-            print("checkMappedGames():          ", self.titleID, " : ", self.gameName, " : ", self.gameImage)
+            host_ip = re.search("^(.*)\.", host_ip).group(
+                0) + "0/24"  # replace 4th octet and add short-form subnet mask
+            print(f"Expected network is '{host_ip}'.")
 
-    def getGameInfo(self):              # ! SHOULD BE REWRITTEN INTO MULTIPLE FUNCTION !
-        if self.titleID is not None:
-            if self.gameType == "PS4":
-                modifiedTitleID = self.titleID + "_00"                                  # tmdb titleID's add "_00" to the end for whatever reason
-                Hash = hmac.new(self.tmdbKey, bytes(modifiedTitleID, 'utf-8'), sha1)   # get hash of tmdb key using sha1 encryption
-                Hash = Hash.hexdigest().upper()
-                url = "http://tmdb.np.dl.playstation.net/tmdb2/" + modifiedTitleID + "_" + Hash + "/" + modifiedTitleID + ".json"     # url containing game name and image
-                response = get(url, headers={"User-Agent": "Mozilla/5.0"})  # get HTML of website
-                soup = BeautifulSoup(response.text, "html.parser")          # use bs4 to make data readable (fix odd formatting)
-
-                try:
-                    self.gameName = search('{"name\":\"(.*?)"', str(soup))  # get gameName from html
-                    self.gameName = self.gameName.group(1)                  # remove regex junk
-
-                    self.gameImage = search('{"icon":"(.*?)"', str(soup))   # get gameImage from html
-                    self.gameImage = self.gameImage.group(1)                # remove regex junk
-                    externalFile.addMappedGame()
-                except AttributeError:                                      # not all PS4 games have a tmdb page for some reason
-                    print("getGameInfo():           !no game found!")
-                    self.gameName = "Unknown"
-                    self.gameImage = "none"
-
-            if self.gameType == "Homebrew" and self.titleID is not None:
-                self.gameName = "Homebrew"                                                          # unfortunately no way found to resolve homebrew ID to a name
-                self.gameImage = "none"
-                externalFile.addMappedGame()
-
-            if self.gameType == "PS1/PS2":
-                self.gameImage = "ps2ps1temp"                           # PS1 and PS2 games use shared cover unless otherwise specified
-                try:
-                    quote_page = "https://raw.githubusercontent.com/zorua98741/PS4-Rich-Presence-for-Discord/main/PS1%20games.md"   # url to github page containing list of PS1 game id's and the corresponding game name
-                    response = get(quote_page, headers={"User-Agent": "Mozilla/5.0"})                                               # get HTML of page
-                    soup = BeautifulSoup(response.text, "html.parser")                                                              # make HTML formatted correctly
-                    self.gameName = search(self.titleID + '.*', str(soup))                                                          # search for the open game's titleID in HTML document
-                    if self.gameName is not None:                                                                                   # if its found remove formatting
-                        self.gameName = self.gameName.group(0)
-                        self.gameName = self.gameName.split(';')
-                        self.gameName = self.gameName[1]                                                                # lower() used since Discord only accepts lowercase characters
-                    else:                                                                                                           # if its not found perhaps open game is a PS2 game
-                        quote_page = "https://raw.githubusercontent.com/zorua98741/PS4-Rich-Presence-for-Discord/main/PS2%20games.md"   # url to github page containing list of PS2 game id's and the corresponding game name
-                        response = get(quote_page, headers={"User-Agent": "Mozilla/5.0"})
-                        soup = BeautifulSoup(response.text, "html.parser")
-                        self.gameName = search(self.titleID + '.*', str(soup))
-                        if self.gameName is not None:
-                            self.gameName = self.gameName.group(0)
-                            self.gameName = self.gameName.split(';')
-                            self.gameName = self.gameName[1]
-                except Exception as e:                                                                                              # if not found then game may be missing from list, or the github page is unavailable
-                    print("Error: ", e, "\n")
-                    self.gameName = "Unknown PS1/PS2 game"
-                externalFile.addMappedGame()
-        else:
-            self.gameName = "Playstation 4 Menu"
-            self.gameImage = "none"
-
-        print("getGameInfo():           ", self.gameName, " : ", self.gameImage)
-
-    def changeDevApp(self):     # needs to be revised
-        for i in range(len(externalFile.s2titleIDVariables)):
-            if gatherDetails.titleID == externalFile.s2titleIDVariables[i]:
-                print("Developer Application found, modifying presence")
-                prepWork.RPC.close()
-                prepWork.RPC = Presence(externalFile.s2appIDVariables[i])
-                prepWork.RPC.connect()
-
-                self.appChanged = True
-                self.found = True
-                break
+            scan = networkscan.Networkscan(host_ip)
+            scan.run()
+            print(f"Completed network scan: {scan.list_of_hosts_found}")
+            # ps4_ip = [i for i in scan.list_of_hosts_found if test_for_ps4(i) is True] # list comprehension alternative
+            ps4_ip = None
+            for i in range(len(scan.list_of_hosts_found)):  # iterate through list of IP addresses
+                if self.test_for_ps4(scan.list_of_hosts_found[i]):
+                    ps4_ip = scan.list_of_hosts_found[i]
+                    break  # break out of loop since the device has been found
+            if ps4_ip is None:  # no device on network belongs to device
+                print("No device on network was found to belong to a Jailbroken PS4 running an FTP server.")
+                self.prompt_user()
             else:
-                self.found = False
-        if self.appChanged is True and self.found is False:
-            self.appChanged = False
-            self.found = True
-            print("Changing to default Application ID in config file")
-            prepWork.RPC.close()
-            prepWork.RPC = Presence(externalFile.s1configVariables[1])
-            prepWork.RPC.connect()
+                self.save_config(ps4_ip)
+
+    def get_ip_from_user(self):
+        ip = input("Please enter the PS4's IP address: ")
+        while self.test_for_ps4(ip) is False:
+            ip = input("Please enter the PS4's IP address: ")
+        self.save_config(ip)
+
+    def test_for_ps4(self, ip):
+        ftp = FTP()
+        try:
+            ftp.connect(ip, 2121)  # device uses port 2121
+            ftp.login("", "")  # device has no creds by default
+            ftp.cwd("/mnt/sandbox")  # device has path as specified
+            ftp.quit()  # close FTP connection
+        except Exception as e:
+            print(f"test_for_ps4():     No FTP server found on '{ip}'. '{e}'.")
+            return False  # some error was encountered, FTP server required does not exist on given IP
+        else:
+            print(f"test_for_ps4():     PS4 found on '{ip}'")
+            return True  # no errors were encountered, an FTP server with no login creds, and "/mnt/sandbox" exists
+
+    def save_config(self, ip):
+        self.config["var"]["ip"] = ip
+        with config_path.open(mode="w+") as f:  # will create file if it doesn't exist, overwrite it if it does
+            json.dump(self.config, f, indent=4)     # write entire config to file
+            f.close()   # close file, needed for when file is open in smart text editors (e.g. notepad++) to reload
+
+    def connect_to_discord(self):  # Not called by any other function in PrepWork()
+        while True:
+            try:
+                self.RPC = Presence(self.config["var"]["client_id"])  # clientID from Discord developer application
+                self.RPC.connect()  # attempt to connect to Discord
+                print("Connected to Discord client")
+                break  # break out of while loop
+            except DiscordNotFound as e:  # handle scenarios where Discord is not running or is otherwise broken.
+                print(f"! Could not find Discord running. '{e}'.")
+                sleep(20)  # wait 20 seconds before retrying
+
+    def save_game_info(self, data):     # called in GatherDetails class, probably shouldn't be here
+        self.config["mapped"].append(data)  # contains {"titleid": val, "name": val, "image": val}
+        with config_path.open(mode="w+") as f:
+            json.dump(self.config, f, indent=4)
+            f.close()
 
 
-allowed = ["True", "true"]
+class GatherDetails:
+    def __init__(self):
+        self.title_id = None
+        self.game_type = None
+        self.game_name = None
+        self.game_image = None
+        self.dev_app_changed = False
 
-externalFile = ExternalFile()
-prepWork = PrepWork()
-gatherDetails = GatherDetails()
+    def get_title_id(self):     # function always called
+        ftp = FTP()
+        data = []
+        self.title_id, self.game_type, = None, None     # reset every run
+        try:
+            ftp.connect(pw.config["var"]["ip"], 2121)  # uses port 2121 for ftp
+            ftp.login("", "")   # no login credentials
+            ftp.cwd("/mnt/sandbox")     # change directory
+            ftp.dir(data.append)    # get directory listing, add each item to list
+            ftp.quit()  # close FTP connection
+        except (ConnectionRefusedError, TimeoutError) as e:     # couldn't connect to PS4
+            # pw.RPC.clear()    # TODO?
+            while pw.test_for_ps4(pw.config["var"]["ip"]) is False:
+                if pw.config["var"]["hibernate"] is False:
+                    sleep(pw.config["var"]["wait_time"])
+                else:
+                    sleep(pw.config["var"]["hibernate_time"])
+        else:   # neither error above were raised
+            for item in data:   # loop through each folder found from directory
+                if (res := re.search("(?!NPXS)([a-zA-Z0-9]{4}[0-9]{5})", item)) is not None:    # Assignment expression,
+                    # do not match NPXS, do match 4 characters followed by 5 numbers (Homebrew can use titleIDs with prefix other than "CUSA")
+                    self.title_id = res.group(0)     # remove regex junk
+            if self.title_id is None:    # user is on homescreen
+                self.title_id = "main_menu"     # discord art asset naming conventions (no spaces, no capitals)
+                self.game_image = self.title_id
+            else:   # user is in some program (PS4 game, homebrew, retro game, etc)
+                if self.title_id[:4] in title_id_dict.get("PS4"):    # first 4 characters from title_id removes numbers
+                    self.game_type = "PS4"
+                elif self.title_id[:4] in title_id_dict.get("PS1/2"):
+                    self.game_type = "PS1/2"
+                else:
+                    self.game_type = "Homebrew"
+        print(f"get_title_id():  {self.title_id, self.game_type}")
 
-externalFile.getData()                  # get data from external text file or create it, and verify it belongs to PS4
-print("\n")
-prepWork.findDiscord()                  # ensure discord is open
+    def check_mapped(self):
+        self.game_name, self.game_image = None, self.title_id   # game_image is title_id to assume user is on home screen
+        found = False   # boolean to know if a game has to be mapped
+        for mapped in pw.config["mapped"]:  # mapped is dict of {titleid, name, image}
+            if self.title_id == mapped["titleid"]:  # currently open game is already mapped, retrieve name and image
+                self.game_name = mapped["name"]
+                self.game_image = mapped["image"]
+                print(f"check_mapped():  {self.game_name, self.game_image}")
+                found = True
+                break   # stop loop as there should only ever be one match per titleID
+        if not found and self.title_id != "main_menu":   # currently open game is NOT already mapped, don't save m menu
+            print("check_mapped():  game has not been mapped yet.")
+            if self.game_type == "PS4":     # use tmdb to try and get name and image from titleID
+                self.get_ps4_game_info()
+            elif self.game_type == "PS1/2":     # use web doc of ps1/2 to get name from titleID
+                self.get_classic_game_info()
+            else:
+                self.get_other_game_info()
 
-previousTitleID = ""
-timer = time()                          # start timer for time elapsed functionality
+    def get_ps4_game_info(self):    # Uses Sony's TMDB api to resolve a titleID to a name and image
+        # note that some titleIDs do NOT have an entry in the TMDB
+        title_id = self.title_id+"_00"
+        title_id_hash = hmac.new(tmdb_key, bytes(title_id, "utf-8"), sha1)    # get hash of tmdb key using sha1
+        title_id_hash = title_id_hash.hexdigest().upper()
+        url = f"http://tmdb.np.dl.playstation.net/tmdb2/{title_id}_{title_id_hash}/{title_id}.json"
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})     # get data from url
+        if response.ok:     # webpage exists
+            j = json.loads(response.text)   # convert from string to dict
+            self.game_name = j["names"][0]["name"]
+            self.game_image = j["icons"][0]["icon"]
+            print(f"get_ps4_game_info():     {self.game_name, self.game_image}")
+        else:   # webpage does not exist
+            print(f"get_ps4_game_info():     No entry found in TMDB for {self.title_id}")
+            self.game_name = self.title_id
+            self.game_image = self.title_id.lower()     # lower() for Discord developer app images
+        pw.save_game_info({"titleid": self.title_id, "name": self.game_name, "image": self.game_image})
 
-while True:
-    gatherDetails.getTitleID()          # get game's titleID from PS4 via FTP
-    if gatherDetails.titleID != previousTitleID:    # used so webpage does not need to be contacted if the details will be the same
-        previousTitleID = gatherDetails.titleID     # update previously opened game
-        gatherDetails.checkMappedGames()
-        externalFile.getNewData()   # method to get new data should be revisited
-        gatherDetails.changeDevApp()
-        if externalFile.s1configVariables[3] in allowed:
-            timer = time()
-    else:
-        print("prevGetGameInfo():       ", gatherDetails.gameName, " : ", gatherDetails.gameImage)
-    try:
-        prepWork.RPC.update(details=gatherDetails.gameName, large_image=gatherDetails.gameImage, large_text=gatherDetails.titleID, start=timer)
-    except(InvalidPipe, InvalidID):
-        prepWork.findDiscord()
-    print("\n")
-    sleep(int(externalFile.s1configVariables[2]))
+    def get_classic_game_info(self):    # Uses online text document of PS1 and PS1 games to resolve a titleID to a name
+        # game_image will be the titleID, for use in Discord developer application image names
+        p1 = "https://raw.githubusercontent.com/zorua98741/PS4-Rich-Presence-for-Discord/main/PS1%20games.md"   # PS1
+        p2 = "https://raw.githubusercontent.com/zorua98741/PS4-Rich-Presence-for-Discord/main/PS2%20games.md"   # PS2
+        if pw.config["var"]["retro_covers"] is True:
+            self.game_image = self.title_id.lower()     # try and use image from Discord dev app
+        else:
+            self.game_image = "ps2ps1temp"  # use single image
+        if (res := self.search_classic(p1)) is not False:
+            self.game_name = res    # PS1 game detected
+        elif (res := self.search_classic(p2)) is not False:
+            self.game_name = res    # PS2 game detected
+        else:
+            self.game_name = "Unknown"  # titleID not found in either external file
+        pw.save_game_info({"titleid": self.title_id, "name": self.game_name, "image": self.game_image})
+        print(f"get_classic_game_info():     {self.game_name, self.game_image}")
+
+    def search_classic(self, url):
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})     # send request to page
+        if response.ok:     # webpage exists
+            if (res := re.search(f"{self.title_id}.*", response.text)) is not None:
+                name = res.group(0).split(";", 1)   # name is a list of [titleID, game name]
+                return name[1]
+        return False
+
+    def get_other_game_info(self):  # Homebrew, and anything else not detected as either PS4 or PS1/PS2 game
+        # This is a placeholder for when/if a way to map other programs is thought of
+        if self.title_id != "main_menu":
+            self.game_name = self.title_id
+            self.game_image = self.title_id.lower()     # lower() for Discord dev app images
+            pw.save_game_info({"titleid": self.title_id, "name": self.game_name, "image": self.game_image})
+            print(f"get_other_game_info():   {self.game_name, self.game_image}")
+
+    def change_dev_app(self):
+        found = False
+        for app in pw.config["devapps"]:
+            if app["titleid"] == self.title_id:
+                print("change_dev_app():    changing to new developer app")
+                found = True
+                self.dev_app_changed = True
+                pw.RPC.close()  # disconnect presence
+                pw.RPC = Presence(app["devid"])     # change "Presence()" client_id
+                pw.RPC.connect()    # reconnect presence here
+                break   # exit loop since match was found
+        if not found and self.dev_app_changed is True:
+            print("change_dev_app():    reverting to default developer app")
+            self.dev_app_changed = False
+            pw.RPC.close()
+            pw.RPC = Presence(pw.config["var"]["client_id"])
+            pw.RPC.connect()
+
+
+
+pw = PrepWork()
+gd = GatherDetails()
+
+
+def driver():   # hopefully temp driver function, overly messy
+    pw.read_config()
+    pw.connect_to_discord()  # called here as *something* clashes with networkscan
+    prev_titleid = ""
+    while True:
+        gd.get_title_id()
+        if prev_titleid == gd.title_id:     # same program as before is open
+            print(f"reusing previous presence data for {gd.game_name}")
+        else:   # a new program has been opened
+            gd.check_mapped()
+            prev_titleid = gd.title_id
+            if pw.config["var"]["use_devapps"] is True:
+                gd.change_dev_app()
+        if pw.config["var"]["presence_on_home"] is False and gd.title_id == "main_menu":
+            pw.RPC.clear()  # may need to be changed to RPC.close() ?
+        else:
+            try:
+                pw.RPC.update(details=gd.game_name, large_image=gd.game_image, large_text=gd.title_id)
+            except PipeClosed as e:
+                print("Error with Discord: ", e)
+                pw.connect_to_discord()
+        print('')
+        sleep(pw.config["var"]["wait_time"])
+
+
+driver()
