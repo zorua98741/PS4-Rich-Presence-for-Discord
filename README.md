@@ -1,4 +1,5 @@
-﻿# PS4-Rich-Presence-for-Discord
+Marked for rewrite, changes coming to how external file is structured + aligning code structure with ps3 version.
+ # PS4-Rich-Presence-for-Discord
  Rich presence script for jailbroken playstation 4.  
  Display what game you are playing on the PS4 via Discord, no PSN required!  
  ---
