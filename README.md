@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```  
 If using the compiled .exe, your anti-virus is likely to flag the file, while i promise no malicious code has been added to my release, 
-it is the users responsibility to ensure they are not running an "unofficial" release/trojan. I also will guide you through using the .py file if need be.  
+it is the users responsibility to ensure they are not running an "unofficial" release/trojan.
 
 ## Quickstart-guide
 1. download "PS4RPD.exe" or "PS4RPD.py"
@@ -34,10 +34,10 @@ it is the users responsibility to ensure they are not running an "unofficial" re
 7. your Discord presence should be updated automatically.
 
 ## Contact Me
-you can contact me via Discord: "zorua98741#0023".
+you can contact me via Discord: "zorua98741".
 
 ## Aditional information
-in the interest of brevity, all additional information has been moved to pages on the [wiki](https://github.com/zorua98741/PS4-Rich-Presence-for-Discord/wiki).
+[wiki](https://github.com/zorua98741/PS4-Rich-Presence-for-Discord/wiki).
 
 ## Known issues/Limitations
 - putting the PS4 into rest mode or disconnecting it from the internet and then turning it back on/reconnecting it can cause the FTP server to not respond.
