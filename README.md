@@ -1,6 +1,6 @@
  # PS4-Rich-Presence-for-Discord
  Rich presence script for jailbroken playstation 4.  
- Display what game you are playing on the PS4 via Discord, no PSN required!  
+ Display what game you are playing on the PS4 via your PC, no PSN required!  
  ---
  [![pypresence](https://img.shields.io/badge/using-pypresence-00bb88.svg?style=for-the-badge&logo=discord&logoWidth=20)](https://github.com/qwertyquerty/pypresence)
 
