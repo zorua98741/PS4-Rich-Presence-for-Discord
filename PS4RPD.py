@@ -16,12 +16,13 @@ default_config = {
     "var": {
         "ip": "",  # IPv4 address belonging to device
         "client_id": 858345055966461973,  # Discord developer application ID
-        "wait_time": 60,  # how long to wait before grabbing new data
-        "retro_covers": True,  # will try to show separate covers if set to True
-        "hibernate": False,  # whether IP prompt is shown when fail to connect to ps4, or to wait (previously "ip_prompt")
-        "hibernate_time": 600,  # how long to wait before attempting to reconnect
-        "presence_on_home": True,  # will disconnect from Discord if set to False
-        "use_devapps": False    # whether script will try and change dev app based on titleID
+        "wait_time": 120,           # how long to wait before grabbing new data
+        "retro_covers": True,       # will try to show separate covers if set to True
+        "hibernate": False,         # whether IP prompt is shown when fail to connect to ps4, or to wait (previously "ip_prompt")
+        "hibernate_time": 600,      # how long to wait before attempting to reconnect
+        "presence_on_home": True,   # will disconnect from Discord if set to False
+        "use_devapps": False,       # whether script will try and change dev app based on titleID
+        "show_timer": False         # whether to show time elapsed. Currently not useful if "hibernate" is used.
     },
     "devapps": [
         {"devid": "", "titleid": ""}
@@ -117,7 +118,7 @@ class PrepWork:
         try:
             ftp.connect(ip, 2121)  # device uses port 2121
             ftp.login("", "")  # device has no creds by default
-            ftp.cwd("/mnt/sandbox")  # device has path as specified
+            ftp.cwd("/mnt/sandbox/NPXS20001_000")  # device has path as specified (NPXS20001: SCE_LNC_APP_TYPE_SHELL_UI)
             ftp.quit()  # close FTP connection
         except Exception as e:
             print(f"test_for_ps4():     No FTP server found on '{ip}'. '{e}'.")
@@ -170,6 +171,7 @@ class GatherDetails:
             ftp.quit()  # close FTP connection
         except (ConnectionRefusedError, TimeoutError) as e:     # couldn't connect to PS4
             # pw.RPC.clear()    # TODO?
+            print("get_title_id():  PS4 not found, sleeping")
             while pw.test_for_ps4(pw.config["var"]["ip"]) is False:
                 if pw.config["var"]["hibernate"] is False:
                     sleep(pw.config["var"]["wait_time"])
@@ -284,7 +286,7 @@ class GatherDetails:
 
 pw = PrepWork()
 gd = GatherDetails()
-
+timer = time()
 
 def driver():   # hopefully temp driver function, overly messy
     pw.read_config()
@@ -303,7 +305,10 @@ def driver():   # hopefully temp driver function, overly messy
             pw.RPC.clear()  # may need to be changed to RPC.close() ?
         else:
             try:
-                pw.RPC.update(details=gd.game_name, large_image=gd.game_image, large_text=gd.title_id)
+                if pw.config["var"]["show_timer"] is False:
+                    pw.RPC.update(details=gd.game_name, large_image=gd.game_image, large_text=gd.title_id)
+                else:
+                    pw.RPC.update(details=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, start=timer)
             except PipeClosed as e:
                 print("Error with Discord: ", e)
                 pw.connect_to_discord()
