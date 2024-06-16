@@ -115,6 +115,7 @@ class PrepWork:
 
     def test_for_ps4(self, ip):
         ftp = FTP()
+        ftp.set_pasv(False)
         try:
             ftp.connect(ip, 2121)  # device uses port 2121
             ftp.login("", "")  # device has no creds by default
@@ -178,6 +179,7 @@ class GatherDetails:
                 else:
                     sleep(pw.config["var"]["hibernate_time"])
         else:   # neither error above were raised
+            print(data)     # "debugging" for Github issue 4
             for item in data:   # loop through each folder found from directory
                 if (res := re.search("(?!NPXS)([a-zA-Z0-9]{4}[0-9]{5})", item)) is not None:    # Assignment expression,
                     # do not match NPXS, do match 4 characters followed by 5 numbers (Homebrew can use titleIDs with prefix other than "CUSA")
