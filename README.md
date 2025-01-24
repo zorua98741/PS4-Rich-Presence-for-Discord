@@ -4,6 +4,8 @@
  ---
  [![pypresence](https://img.shields.io/badge/using-pypresence-00bb88.svg?style=for-the-badge&logo=discord&logoWidth=20)](https://github.com/qwertyquerty/pypresence)
 
+## Discord has broken or changed how images are handled in Rich Presence, I am aware of the issue and looking to see how this can be fixed
+
 ## Display Example
 No game 	| 	PS4 game 	|	PS2 game* 	|	PS1 game* 	|
  -----------|---------------|---------------|---------------|
