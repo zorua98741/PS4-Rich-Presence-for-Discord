@@ -22,7 +22,8 @@ default_config = {
         "hibernate_time": 600,      # how long to wait before attempting to reconnect
         "presence_on_home": True,   # will disconnect from Discord if set to False
         "use_devapps": False,       # whether script will try and change dev app based on titleID
-        "show_timer": False         # whether to show time elapsed. Currently not useful if "hibernate" is used.
+        "show_timer": False,         # whether to show time elapsed. Currently not useful if "hibernate" is used.
+        "use_appname": False,
     },
     "devapps": [
         {"devid": "", "titleid": ""}
@@ -306,11 +307,17 @@ def driver():   # hopefully temp driver function, overly messy
         if pw.config["var"]["presence_on_home"] is False and gd.title_id == "main_menu":
             pw.RPC.clear()  # may need to be changed to RPC.close() ?
         else:
-            try:
+            try:    # this will be despaghettified in the combined presence script. Dirty implementation as don't expect it to be widely utilised
                 if pw.config["var"]["show_timer"] is False:
-                    pw.RPC.update(details=gd.game_name, large_image=gd.game_image, large_text=gd.title_id)
+                    if pw.config["var"]["use_appname"]:
+                        pw.RPC.update(details=gd.game_name, large_image=gd.game_image, large_text=gd.title_id)
+                    else:
+                        pw.RPC.update(name=gd.game_name, large_image=gd.game_image, large_text=gd.title_id)
                 else:
-                    pw.RPC.update(details=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, start=timer)
+                    if pw.config["var"]["use_appname"]:
+                        pw.RPC.update(details=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, start=timer)
+                    else:
+                        pw.RPC.update(name=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, start=timer)
             except PipeClosed as e:
                 print("Error with Discord: ", e)
                 pw.connect_to_discord()
