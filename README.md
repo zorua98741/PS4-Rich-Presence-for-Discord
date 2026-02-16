@@ -7,6 +7,7 @@
 
 
 ## Display Example
+Please note images are slightly outdated and the script now supports showing the game's name directly instead of "PS4" (the name of the developer application)
 No game 	| 	PS4 game 	|	PS2 game* 	|	PS1 game* 	|
  -----------|---------------|---------------|---------------|
  ![noGame](https://i.imgur.com/MTrBFew.png) | ![PS4Game](https://i.imgur.com/gtIW76h.png) | ![PS2Game](https://i.imgur.com/riihpST.png) 	| ![PS1Game](https://i.imgur.com/CRRjGFZ.png) 	|  
