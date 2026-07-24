@@ -4,7 +4,7 @@ from socket import socket, AF_INET, SOCK_DGRAM  # get host's IP address
 import re  # various string manipulation via regex
 import networkscan  # get list of devices on user's network
 from ftplib import FTP  # connection between PC and device
-from pypresence import Presence  # sends presence data to Discord client
+from pypresence import Presence, StatusDisplayType  # sends presence data to Discord client
 from pypresence.exceptions import DiscordNotFound  # handles when Discord cannot be found as process
 from pypresence.exceptions import PipeClosed   # handles when Discord was previously connected to but is no longer found
 from time import sleep, time  # adds delay to program. Plus "time elapsed" functionality for presence
@@ -14,16 +14,19 @@ import requests     # get data from website
 
 default_config = {
     "var": {
-        "ip": "",  # IPv4 address belonging to device
-        "client_id": 858345055966461973,  # Discord developer application ID
-        "wait_time": 120,           # how long to wait before grabbing new data
-        "retro_covers": True,       # will try to show separate covers if set to True
-        "hibernate": False,         # whether IP prompt is shown when fail to connect to ps4, or to wait (previously "ip_prompt")
-        "hibernate_time": 600,      # how long to wait before attempting to reconnect
-        "presence_on_home": True,   # will disconnect from Discord if set to False
-        "use_devapps": False,       # whether script will try and change dev app based on titleID
-        "show_timer": False,         # whether to show time elapsed. Currently not useful if "hibernate" is used.
-        "use_appname": False,
+        "ip": "",                      # IPv4 address belonging to device
+        "passive_ftp": True,           # whether or not to use passive ftp, disable if there's trouble reading from ps4
+        "client_id": 858345055966461973, # Discord developer application ID
+        "wait_time": 120,              # how long to wait before grabbing new data
+        "retro_covers": True,          # will try to show separate covers if set to True
+        "hibernate": False,            # whether IP prompt is shown when fail to connect to ps4, or to wait (previously "ip_prompt")
+        "hibernate_time": 600,         # how long to wait before attempting to reconnect
+        "presence_on_home": True,      # will disconnect from Discord if set to False
+        "use_devapps": False,          # whether script will try and change dev app based on titleID
+        "show_timer": False,           # whether to show time elapsed. Currently not useful if "hibernate" is used.
+        "use_appname": False,          # only show game info in status (removes Playstation 4 text / dev app name)
+        "gamename_for_display": False, # use app name as activity status shown under your display name in a member list. won't change anything if use_appname is set to true
+        "custom_text": ""              # a custom line of text that goes under the game name in the RPC. leave empty to disable
     },
     "devapps": [
         {"devid": "", "titleid": ""}
@@ -116,7 +119,7 @@ class PrepWork:
 
     def test_for_ps4(self, ip):
         ftp = FTP()
-        ftp.set_pasv(False)     # Github issue #4, need Active mode to work with Pi-Pwn
+        ftp.set_pasv(pw.config["var"]["passive_ftp"])     # Github issue #4, need Active mode to work with Pi-Pwn
         try:
             ftp.connect(ip, 2121)  # device uses port 2121
             ftp.login("", "")  # device has no creds by default
@@ -163,7 +166,7 @@ class GatherDetails:
 
     def get_title_id(self):     # function always called
         ftp = FTP()
-        ftp.set_pasv(False)     # Github issue #4, need Active mode to work with Pi-Pwn
+        ftp.set_pasv(pw.config["var"]["passive_ftp"])     # Github issue #4, need Active mode to work with Pi-Pwn
         data = []
         self.title_id, self.game_type, = None, None     # reset every run
         try:
@@ -295,6 +298,17 @@ def driver():   # hopefully temp driver function, overly messy
     pw.read_config()
     pw.connect_to_discord()  # called here as *something* clashes with networkscan
     prev_titleid = ""
+    
+    # use custom text if set, otherwise set to None so it'll be ignored by pypresence
+    custom_text = None
+    if(pw.config["var"]["custom_text"] != ""):
+        custom_text = pw.config["var"]["custom_text"]
+        
+    # set status display type based on config option (presence text under your display name in a member list). defaults to the Discord default NAME
+    stat_disp_type = StatusDisplayType.NAME
+    if(pw.config["var"]["gamename_for_display"] == True):
+        stat_disp_type = StatusDisplayType.DETAILS
+    
     while True:
         gd.get_title_id()
         if prev_titleid == gd.title_id:     # same program as before is open
@@ -310,14 +324,14 @@ def driver():   # hopefully temp driver function, overly messy
             try:    # this will be despaghettified in the combined presence script. Dirty implementation as don't expect it to be widely utilised
                 if pw.config["var"]["show_timer"] is False:
                     if pw.config["var"]["use_appname"]:
-                        pw.RPC.update(details=gd.game_name, large_image=gd.game_image, large_text=gd.title_id)
+                        pw.RPC.update(name=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, status_display_type=stat_disp_type, state=custom_text)
                     else:
-                        pw.RPC.update(name=gd.game_name, large_image=gd.game_image, large_text=gd.title_id)
+                        pw.RPC.update(details=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, status_display_type=stat_disp_type, state=custom_text)
                 else:
                     if pw.config["var"]["use_appname"]:
-                        pw.RPC.update(details=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, start=timer)
+                        pw.RPC.update(name=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, start=timer, status_display_type=stat_disp_type, state=custom_text)
                     else:
-                        pw.RPC.update(name=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, start=timer)
+                        pw.RPC.update(details=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, start=timer, status_display_type=stat_disp_type, state=custom_text)
             except PipeClosed as e:
                 print("Error with Discord: ", e)
                 pw.connect_to_discord()
