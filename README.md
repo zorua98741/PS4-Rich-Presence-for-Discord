@@ -36,6 +36,22 @@ it is the users responsibility to ensure they are not running an "unofficial" re
 6. a config file will be generated in the same directory as the script that will allow you to change some options. (values will only update on restart of script)
 7. your Discord presence should be updated automatically.
 
+## Configuration
+##### var
+`ip` - IPv4 address belonging to device
+`passive_ftp` - use passive mode for ftp. disable if you get stuck on a "Connected to Discord client" message
+`client_id` - Discord developer application ID
+`wait_time` - how long to wait before refreshing game data from ps4
+`retro_covers` - try and use images from Discord dev app for PS1/PS2 games
+`hibernate` - whether IP prompt is shown when can't to connect to ps4, or to wait (previously "ip_prompt")
+`hibernate_time` - how long to wait before attempting to reconnect
+`presence_on_home` - show RPC on home screen
+`use_devapps` - whether script will try and change dev app based on titleID
+`show_timer` - whether to show time elapsed. Currently not useful if "hibernate" is enabled
+`use_appname` - show discord developer app name in rpc
+`gamename_for_display` - use the game name for status text in a member list. won't change anything if use_appname is set to true
+`custom_text` - a custom line of text that goes under the game name in the RPC. leave empty to disable
+
 ## Contact Me
 you can contact me via Discord: "zorua98741".
 
