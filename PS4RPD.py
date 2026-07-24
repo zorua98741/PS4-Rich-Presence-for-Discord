@@ -24,7 +24,7 @@ default_config = {
         "presence_on_home": True,      # will disconnect from Discord if set to False
         "use_devapps": False,          # whether script will try and change dev app based on titleID
         "show_timer": False,           # whether to show time elapsed. Currently not useful if "hibernate" is used.
-        "use_appname": False,          # only show game info in status (removes Playstation 4 text / dev app name)
+        "use_appname": False,          # show discord developer app name in rpc
         "gamename_for_display": False, # use app name as activity status shown under your display name in a member list. won't change anything if use_appname is set to true
         "custom_text": ""              # a custom line of text that goes under the game name in the RPC. leave empty to disable
     },
@@ -324,14 +324,14 @@ def driver():   # hopefully temp driver function, overly messy
             try:    # this will be despaghettified in the combined presence script. Dirty implementation as don't expect it to be widely utilised
                 if pw.config["var"]["show_timer"] is False:
                     if pw.config["var"]["use_appname"]:
-                        pw.RPC.update(name=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, status_display_type=stat_disp_type, state=custom_text)
-                    else:
                         pw.RPC.update(details=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, status_display_type=stat_disp_type, state=custom_text)
+                    else:
+                        pw.RPC.update(name=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, status_display_type=stat_disp_type, state=custom_text)
                 else:
                     if pw.config["var"]["use_appname"]:
-                        pw.RPC.update(name=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, start=timer, status_display_type=stat_disp_type, state=custom_text)
-                    else:
                         pw.RPC.update(details=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, start=timer, status_display_type=stat_disp_type, state=custom_text)
+                    else:
+                        pw.RPC.update(name=gd.game_name, large_image=gd.game_image, large_text=gd.title_id, start=timer, status_display_type=stat_disp_type, state=custom_text)
             except PipeClosed as e:
                 print("Error with Discord: ", e)
                 pw.connect_to_discord()
