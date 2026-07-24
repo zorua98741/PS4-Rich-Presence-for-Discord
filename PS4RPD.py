@@ -15,7 +15,7 @@ import requests     # get data from website
 default_config = {
     "var": {
         "ip": "",                      # IPv4 address belonging to device
-        "passive_ftp": True,           # whether or not to use passive ftp, disable if there's trouble reading from ps4
+        "passive_ftp": False,           # whether or not to use passive ftp, disable if there's trouble reading from ps4
         "client_id": 858345055966461973, # Discord developer application ID
         "wait_time": 120,              # how long to wait before grabbing new data
         "retro_covers": True,          # will try to show separate covers if set to True
