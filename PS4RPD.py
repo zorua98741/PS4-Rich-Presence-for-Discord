@@ -25,7 +25,7 @@ default_config = {
         "use_devapps": False,          # whether script will try and change dev app based on titleID
         "show_timer": False,           # whether to show time elapsed. Currently not useful if "hibernate" is used.
         "use_appname": False,          # show discord developer app name in rpc
-        "gamename_for_display": False, # use app name as activity status shown under your display name in a member list. won't change anything if use_appname is set to true
+        "gamename_for_display": False, # use the game name for status text in a member list. won't change anything if use_appname is set to true
         "custom_text": ""              # a custom line of text that goes under the game name in the RPC. leave empty to disable
     },
     "devapps": [
